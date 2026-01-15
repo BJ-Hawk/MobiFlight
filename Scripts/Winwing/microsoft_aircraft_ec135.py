@@ -1,4 +1,4 @@
-# H135_all_in_one
+# Microsoft EC135 all_in_one
 # Single-file bridge: SimConnect(MobiFlight LVARs) -> WinWing MCDUs 
 # Requires: pip install websockets SimConnect==0.4.24 (or your working SimConnect lib)
 # CREDITS: Koseng on GitHub and his MSFSPythonSimConnectMobiFlightExtension (https://github.com/Koseng/MSFSPythonSimConnectMobiFlightExtension)
@@ -1173,3 +1173,4 @@ if __name__ == "__main__":
         cpds_display.stop()
         mcdu_capt.close()
         mcdu_copi.close()
+
