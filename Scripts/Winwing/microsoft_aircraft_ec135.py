@@ -477,7 +477,7 @@ class McduSocket:
         except Exception:
             pass
 
-# ========================= CDS2 (COPILOT) RENDERER =========================
+# ========================= CPDS (COPILOT) RENDERER =========================
 def _safe_float(v, default: float = 0.0) -> float:
     """Convert input to float, returning default on failure."""
     try:
@@ -514,32 +514,32 @@ def _oat_text_kelvin_to_c(k: float) -> str:
     num = f"{c:3d}"
     return f"OAT {num} C"
 
-# CDS2 uses 3 blocks of 8 chars to fit 24 cols: [0..7][8..15][16..23]
-CDS2_L_START = 0
-CDS2_C_START = 8
-CDS2_R_START = 16
-CDS2_W = 8
+# CPDS uses 3 blocks of 8 chars to fit 24 cols: [0..7][8..15][16..23]
+CPDS_L_START = 0
+CPDS_C_START = 8
+CPDS_R_START = 16
+CPDS_W = 8
 
 def _put_blk(grid, row: int, start: int, text: str, align: str = "left", colour="w", size=LARGE):
     """
     align: "left" | "right" | "center"
     """
     t = (text or "")
-    if len(t) > CDS2_W:
-        t = t[:CDS2_W]
+    if len(t) > CPDS_W:
+        t = t[:CPDS_W]
     if align == "right":
-        t = t.rjust(CDS2_W)
+        t = t.rjust(CPDS_W)
     elif align == "center":
-        t = t.center(CDS2_W)
+        t = t.center(CPDS_W)
     else:
-        t = t.ljust(CDS2_W)
+        t = t.ljust(CPDS_W)
     put_text(grid, t, row, start, colour=colour, size=size)
 
 def _put_blk_lc(grid, row: int, text: str, align: str = "left", colour="w", size=LARGE):
     """
     Put text spanning LEFT+CENTER blocks (16 columns total).
     """
-    width = CDS2_W * 2
+    width = CPDS_W * 2
     t = (text or "")
     if len(t) > width:
         t = t[:width]
@@ -549,16 +549,16 @@ def _put_blk_lc(grid, row: int, text: str, align: str = "left", colour="w", size
         t = t.center(width)
     else:
         t = t.ljust(width)
-    put_text(grid, t, row, CDS2_L_START, colour=colour, size=size)
+    put_text(grid, t, row, CPDS_L_START, colour=colour, size=size)
 
-def _cds2_separator(grid, row: int):
-    """Draw a CDS2 separator line."""
+def _cpds_separator(grid, row: int):
+    """Draw a CPDS separator line."""
     put_text(grid, "-" * CDU_COLUMNS, row, 0, colour="k", size=SMALL)
 
-def build_cds2_grid(
+def build_cpds_grid(
     vr: MobiFlightVariableRequests,
     knob_cds: int,
-    cds2_scroll: int,
+    cpds_scroll: int,
     volt_amp: int,
     rad_alt_scrl: int,
     cds_test: int,
@@ -566,7 +566,7 @@ def build_cds2_grid(
     msg2=None
 ) -> List[List[Cell]]:
     """
-    Build CDS2 screen for COPILOT MCDU.
+    Build CPDS screen for COPILOT MCDU.
 
     IMPORTANT:
     - Does NOT call get_state()
@@ -578,26 +578,26 @@ def build_cds2_grid(
 
     # Static separator rows
     for r in (2, 4, 6, 10):
-        _cds2_separator(grid, r)
+        _cpds_separator(grid, r)
 
     # Static fuel labels (rows 8/9)
-    #_put_blk(grid, 8, CDS2_L_START, " KG", align="left")
-    #_put_blk(grid, 8, CDS2_C_START, " KG", align="center")
-    #_put_blk(grid, 8, CDS2_R_START, "KG", align="center")
+    #_put_blk(grid, 8, CPDS_L_START, " KG", align="left")
+    #_put_blk(grid, 8, CPDS_C_START, " KG", align="center")
+    #_put_blk(grid, 8, CPDS_R_START, "KG", align="center")
 
-    _put_blk(grid, 9, CDS2_L_START, "SPLY 1", align="left", size=SMALL)
-    _put_blk(grid, 9, CDS2_C_START, "MAIN", align="center", size=SMALL)
-    _put_blk(grid, 9, CDS2_R_START, "SPLY 2", align="right", size=SMALL)
+    _put_blk(grid, 9, CPDS_L_START, "SPLY 1", align="left", size=SMALL)
+    _put_blk(grid, 9, CPDS_C_START, "MAIN", align="center", size=SMALL)
+    _put_blk(grid, 9, CPDS_R_START, "SPLY 2", align="right", size=SMALL)
 
     # Bottom static labels (rows 11-13)
     if knob_cds < 5:
-        _put_blk(grid, 11, CDS2_L_START, "Vne", align="center", size=SMALL)
+        _put_blk(grid, 11, CPDS_L_START, "Vne", align="center", size=SMALL)
         _put_blk_lc(grid, 12, "GROSS MASS", align="left", size=SMALL)
-        _put_blk(grid, 11, CDS2_R_START, "RAD ALT", align="left", size=SMALL)
+        _put_blk(grid, 11, CPDS_R_START, "RAD ALT", align="left", size=SMALL)
     elif knob_cds == 5:
         _put_blk_lc(grid, 13, "HOOK LOAD", align="left", size=SMALL)
-        _put_blk(grid, 12, CDS2_R_START, "CABLE", align="left", size=SMALL)
-        _put_blk(grid, 13, CDS2_R_START, "LENGHT", align="left", size=SMALL)  # keep spelling
+        _put_blk(grid, 12, CPDS_R_START, "CABLE", align="left", size=SMALL)
+        _put_blk(grid, 13, CPDS_R_START, "LENGHT", align="left", size=SMALL)  # keep spelling
 
     # ---------------- AVAR reads (only what we need) ----------------
     eng1_oth = _safe_float(vr.get("(A:GENERAL ENG ELAPSED TIME:1,number)"))  # engine 1 operating time (seconds)
@@ -638,98 +638,98 @@ def build_cds2_grid(
 
     # ---------------- Row 0 (mode-dependent, 3 columns) ----------------
     if knob_cds == 0:
-        _put_blk(grid, 0, CDS2_L_START, _fmt_h_mm(eng1_oth), align="center")
-        _put_blk(grid, 0, CDS2_C_START, " OTH ", align="center", size=SMALL)
-        _put_blk(grid, 0, CDS2_R_START, _fmt_h_mm(eng2_oth), align="center")
+        _put_blk(grid, 0, CPDS_L_START, _fmt_h_mm(eng1_oth), align="center")
+        _put_blk(grid, 0, CPDS_C_START, " OTH ", align="center", size=SMALL)
+        _put_blk(grid, 0, CPDS_R_START, _fmt_h_mm(eng2_oth), align="center")
 
     elif knob_cds == 1:
-        _put_blk(grid, 0, CDS2_L_START, "---.-", align="left")
-        _put_blk(grid, 0, CDS2_C_START, " MEM ", align="center", size=SMALL)
-        _put_blk(grid, 0, CDS2_R_START, "---.-", align="right")
+        _put_blk(grid, 0, CPDS_L_START, "---.-", align="left")
+        _put_blk(grid, 0, CPDS_C_START, " MEM ", align="center", size=SMALL)
+        _put_blk(grid, 0, CPDS_R_START, "---.-", align="right")
 
     elif knob_cds == 2:
         # messages TBD — leave blank for now
         if msg1:
-            _put_blk(grid, 0, CDS2_L_START, msg1, align="center")
+            _put_blk(grid, 0, CPDS_L_START, msg1, align="center")
         if msg2:
-            _put_blk(grid, 0, CDS2_R_START, msg2, align="center")
-        _put_blk(grid, 0, CDS2_C_START, " MSG ", align="center", size=SMALL)
+            _put_blk(grid, 0, CPDS_R_START, msg2, align="center")
+        _put_blk(grid, 0, CPDS_C_START, " MSG ", align="center", size=SMALL)
 
     else:
-        # knob_cds >= 3 uses cds2_scroll pages
-        if cds2_scroll == 0:
-            _put_blk(grid, 0, CDS2_L_START, _fmt_num(eng1_n1 * 100.0, 1), align="center")
-            _put_blk(grid, 0, CDS2_C_START, "N1 %", align="center", size=SMALL)
-            _put_blk(grid, 0, CDS2_R_START, _fmt_num(eng2_n1 * 100.0, 1), align="center")
+        # knob_cds >= 3 uses cpds_scroll pages
+        if cpds_scroll == 0:
+            _put_blk(grid, 0, CPDS_L_START, _fmt_num(eng1_n1 * 100.0, 1), align="center")
+            _put_blk(grid, 0, CPDS_C_START, "N1 %", align="center", size=SMALL)
+            _put_blk(grid, 0, CPDS_R_START, _fmt_num(eng2_n1 * 100.0, 1), align="center")
 
-        elif cds2_scroll == 1:
+        elif cpds_scroll == 1:
             eng1_n2_pct = eng1_n2 * 100.0
             eng2_n2_pct = eng2_n2 * 100.0
             eng1_n2_col = "r" if eng1_n2_pct <= 80.0 or eng1_n2_pct >= 106.0 else "w"
             eng2_n2_col = "r" if eng2_n2_pct <= 80.0 or eng2_n2_pct >= 106.0 else "w"
-            _put_blk(grid, 0, CDS2_L_START, _fmt_num(eng1_n2_pct, 1), align="center", colour=eng1_n2_col)
-            _put_blk(grid, 0, CDS2_C_START, "N2 %", align="center", size=SMALL)
-            _put_blk(grid, 0, CDS2_R_START, _fmt_num(eng2_n2_pct, 1), align="center", colour=eng2_n2_col)
+            _put_blk(grid, 0, CPDS_L_START, _fmt_num(eng1_n2_pct, 1), align="center", colour=eng1_n2_col)
+            _put_blk(grid, 0, CPDS_C_START, "N2 %", align="center", size=SMALL)
+            _put_blk(grid, 0, CPDS_R_START, _fmt_num(eng2_n2_pct, 1), align="center", colour=eng2_n2_col)
 
-        elif cds2_scroll == 2:
+        elif cpds_scroll == 2:
             eng1_egt_c = eng1_egt - 273.15
             eng2_egt_c = eng2_egt - 273.15
             eng1_egt_col = "r" if eng1_egt_c >= 895 else ("a" if eng1_egt_c >= 855 else "w")
             eng2_egt_col = "r" if eng2_egt_c >= 895 else ("a" if eng2_egt_c >= 855 else "w")
-            _put_blk(grid, 0, CDS2_L_START, _fmt_num(eng1_egt_c, 0), align="center", colour=eng1_egt_col)
-            _put_blk(grid, 0, CDS2_C_START, "EGT C", align="center", size=SMALL)
-            _put_blk(grid, 0, CDS2_R_START, _fmt_num(eng2_egt_c, 0), align="center", colour=eng2_egt_col)
+            _put_blk(grid, 0, CPDS_L_START, _fmt_num(eng1_egt_c, 0), align="center", colour=eng1_egt_col)
+            _put_blk(grid, 0, CPDS_C_START, "EGT C", align="center", size=SMALL)
+            _put_blk(grid, 0, CPDS_R_START, _fmt_num(eng2_egt_c, 0), align="center", colour=eng2_egt_col)
 
-        elif cds2_scroll == 3:
-            _put_blk(grid, 0, CDS2_L_START, _fmt_num(eng1_t1 - 273.15, 0), align="center")
-            _put_blk(grid, 0, CDS2_C_START, " T1 C", align="center", size=SMALL)
-            _put_blk(grid, 0, CDS2_R_START, _fmt_num(eng2_t1 - 273.15, 0), align="center")
+        elif cpds_scroll == 3:
+            _put_blk(grid, 0, CPDS_L_START, _fmt_num(eng1_t1 - 273.15, 0), align="center")
+            _put_blk(grid, 0, CPDS_C_START, " T1 C", align="center", size=SMALL)
+            _put_blk(grid, 0, CPDS_R_START, _fmt_num(eng2_t1 - 273.15, 0), align="center")
 
-        elif cds2_scroll == 4:
-            _put_blk(grid, 0, CDS2_L_START, _fmt_num(collective * 100.0, 0), align="center")
-            _put_blk(grid, 0, CDS2_C_START, "CLP %", align="center", size=SMALL)
-            _put_blk(grid, 0, CDS2_R_START, _fmt_num(collective * 100.0, 0), align="center")
+        elif cpds_scroll == 4:
+            _put_blk(grid, 0, CPDS_L_START, _fmt_num(collective * 100.0, 0), align="center")
+            _put_blk(grid, 0, CPDS_C_START, "CLP %", align="center", size=SMALL)
+            _put_blk(grid, 0, CPDS_R_START, _fmt_num(collective * 100.0, 0), align="center")
 
-        else:  # cds2_scroll == 5
-            _put_blk(grid, 0, CDS2_L_START, _fmt_num(pr / 100.0, 0), align="center")
-            _put_blk(grid, 0, CDS2_C_START, "PR MB", align="center", size=SMALL)
-            _put_blk(grid, 0, CDS2_R_START, _fmt_num(pr / 100.0, 0), align="center")
+        else:  # cpds_scroll == 5
+            _put_blk(grid, 0, CPDS_L_START, _fmt_num(pr / 100.0, 0), align="center")
+            _put_blk(grid, 0, CPDS_C_START, "PR MB", align="center", size=SMALL)
+            _put_blk(grid, 0, CPDS_R_START, _fmt_num(pr / 100.0, 0), align="center")
 
     # ---------------- Row 1 (TQ%) ----------------
     eng1_tq_pct = eng1_tq * 100.0
     eng2_tq_pct = eng2_tq * 100.0
     eng1_tq_col = "r" if eng1_tq_pct >= 75.0 else ("a" if eng1_tq_pct >= 70.0 else "w")
     eng2_tq_col = "r" if eng2_tq_pct >= 75.0 else ("a" if eng2_tq_pct >= 70.0 else "w")
-    _put_blk(grid, 1, CDS2_L_START, _fmt_num(eng1_tq_pct, 1), align="center", colour=eng1_tq_col)
-    _put_blk(grid, 1, CDS2_C_START, "TQ%", align="center")
-    _put_blk(grid, 1, CDS2_R_START, _fmt_num(eng2_tq_pct, 1), align="center", colour=eng2_tq_col)
+    _put_blk(grid, 1, CPDS_L_START, _fmt_num(eng1_tq_pct, 1), align="center", colour=eng1_tq_col)
+    _put_blk(grid, 1, CPDS_C_START, "TQ%", align="center")
+    _put_blk(grid, 1, CPDS_R_START, _fmt_num(eng2_tq_pct, 1), align="center", colour=eng2_tq_col)
 
     # ---------------- Row 3 (DC/GEN/BAT) ----------------
     if volt_amp == 0:
         dc1_col = "r" if dc1_volt <= 20.5 else ("a" if dc1_volt <= 21.0 else "w")
         dc2_col = "r" if dc2_volt <= 20.5 else ("a" if dc2_volt <= 21.0 else "w")
-        _put_blk(grid, 3, CDS2_L_START, _fmt_num(dc1_volt, 1), align="center", colour=dc1_col)
-        _put_blk(grid, 3, CDS2_C_START, "DC VOLTS", align="center", size=SMALL)
-        _put_blk(grid, 3, CDS2_R_START, _fmt_num(dc2_volt, 1), align="center", colour=dc2_col)
+        _put_blk(grid, 3, CPDS_L_START, _fmt_num(dc1_volt, 1), align="center", colour=dc1_col)
+        _put_blk(grid, 3, CPDS_C_START, "DC VOLTS", align="center", size=SMALL)
+        _put_blk(grid, 3, CPDS_R_START, _fmt_num(dc2_volt, 1), align="center", colour=dc2_col)
     elif volt_amp == 1:
-        _put_blk(grid, 3, CDS2_L_START, _fmt_num(gen1_amps, 1), align="center")
-        _put_blk(grid, 3, CDS2_C_START, "GEN AMPS", align="center", size=SMALL)
-        _put_blk(grid, 3, CDS2_R_START, _fmt_num(gen2_amps, 1), align="center")
+        _put_blk(grid, 3, CPDS_L_START, _fmt_num(gen1_amps, 1), align="center")
+        _put_blk(grid, 3, CPDS_C_START, "GEN AMPS", align="center", size=SMALL)
+        _put_blk(grid, 3, CPDS_R_START, _fmt_num(gen2_amps, 1), align="center")
     else:
-        _put_blk(grid, 3, CDS2_L_START, _fmt_num(bat_amps, 1), align="center")
-        _put_blk(grid, 3, CDS2_C_START, "BAT AMPS", align="center", size=SMALL)
-        _put_blk(grid, 3, CDS2_R_START, _fmt_num(bat_amps, 1), align="center")
+        _put_blk(grid, 3, CPDS_L_START, _fmt_num(bat_amps, 1), align="center")
+        _put_blk(grid, 3, CPDS_C_START, "BAT AMPS", align="center", size=SMALL)
+        _put_blk(grid, 3, CPDS_R_START, _fmt_num(bat_amps, 1), align="center")
 
     # ---------------- Row 5 (OAT left+center span) ----------------
     oat_text = _oat_text_kelvin_to_c(oat_k)
     if oat_text.startswith("OAT"):
         rest = oat_text[3:]
-        max_rest = (CDS2_W * 2) - 3
+        max_rest = (CPDS_W * 2) - 3
         if max_rest < 0:
             max_rest = 0
         rest = rest[:max_rest]
-        put_text(grid, "OAT", 5, CDS2_L_START, size=SMALL)
-        put_text(grid, rest, 5, CDS2_L_START + 3, size=LARGE)
+        put_text(grid, "OAT", 5, CPDS_L_START, size=SMALL)
+        put_text(grid, rest, 5, CPDS_L_START + 3, size=LARGE)
     else:
         _put_blk_lc(grid, 5, oat_text, align="left")
 
@@ -745,27 +745,27 @@ def build_cds2_grid(
     low_c = fuel_main <= low_fuel_kg
     low_r = fuel_sply2 <= low_fuel_kg
     if low_l:
-        _put_blk(grid, 7, CDS2_L_START, "LOW", align="left", colour="r")
+        _put_blk(grid, 7, CPDS_L_START, "LOW", align="left", colour="r")
     if low_c:
-        _put_blk(grid, 7, CDS2_C_START, "LOW", align="center", colour="r")
+        _put_blk(grid, 7, CPDS_C_START, "LOW", align="center", colour="r")
     if low_r:
-        _put_blk(grid, 7, CDS2_R_START, "LOW", align="right", colour="r")
+        _put_blk(grid, 7, CPDS_R_START, "LOW", align="right", colour="r")
 
     def _put_kg_value(row, start, value_text, align, colour):
         total_len = len(value_text) + 2
         if align == "right":
-            col = start + (CDS2_W - total_len)
+            col = start + (CPDS_W - total_len)
         elif align == "center":
-            col = start + (CDS2_W - total_len) // 2
+            col = start + (CPDS_W - total_len) // 2
         else:
             col = start
         put_text(grid, value_text, row, col, colour=colour, size=LARGE)
         put_text(grid, "KG", row, col + len(value_text), colour=colour, size=SMALL)
 
     # ---------------- Row 8 "NNNKG" ----------------
-    _put_kg_value(8, CDS2_L_START, f"{int(round(fuel_sply1)):>3}", "left", fuel_lvl_l_col)
-    _put_kg_value(8, CDS2_C_START, f"{int(round(fuel_main )):>3}", "center", fuel_lvl_c_col)
-    _put_kg_value(8, CDS2_R_START, f"{int(round(fuel_sply2)):>3}", "right", fuel_lvl_r_col)
+    _put_kg_value(8, CPDS_L_START, f"{int(round(fuel_sply1)):>3}", "left", fuel_lvl_l_col)
+    _put_kg_value(8, CPDS_C_START, f"{int(round(fuel_main )):>3}", "center", fuel_lvl_c_col)
+    _put_kg_value(8, CPDS_R_START, f"{int(round(fuel_sply2)):>3}", "right", fuel_lvl_r_col)
 
     # ---------------- Row 11 center value (RAD ALT / KT / ----) ----------------
     if knob_cds < 5:
@@ -773,52 +773,52 @@ def build_cds2_grid(
             ft = int(round((rad_alt_raw - 1.5) * 3.28084))
             rad_alt_mkr = _safe_float(vr.get("(L:radioHeightMkr,feet)")) * 10
             rad_alt_col = "a" if rad_alt_raw <= rad_alt_mkr else "w"
-            _put_blk(grid, 11, CDS2_C_START, f" {ft} FT  ", align="right", colour=rad_alt_col)
+            _put_blk(grid, 11, CPDS_C_START, f" {ft} FT  ", align="right", colour=rad_alt_col)
         else:
-            _put_blk(grid, 11, CDS2_C_START, "--- KT  ", align="right")
+            _put_blk(grid, 11, CPDS_C_START, "--- KT  ", align="right")
     elif knob_cds == 5:
-        _put_blk(grid, 11, CDS2_C_START, " ---- ", align="center")
+        _put_blk(grid, 11, CPDS_C_START, " ---- ", align="center")
 
     if cds_test == 1:
         # Override all test display fields regardless of other switch states
-        _put_blk(grid, 0, CDS2_L_START, "888.8", align="center")
-        _put_blk(grid, 0, CDS2_C_START, "8888", align="center")
-        _put_blk(grid, 0, CDS2_R_START, "888.8", align="center")
+        _put_blk(grid, 0, CPDS_L_START, "888.8", align="center")
+        _put_blk(grid, 0, CPDS_C_START, "8888", align="center")
+        _put_blk(grid, 0, CPDS_R_START, "888.8", align="center")
 
-        _put_blk(grid, 1, CDS2_L_START, "888.8", align="center")
-        _put_blk(grid, 1, CDS2_R_START, "888.8", align="center")
+        _put_blk(grid, 1, CPDS_L_START, "888.8", align="center")
+        _put_blk(grid, 1, CPDS_R_START, "888.8", align="center")
 
-        _put_blk(grid, 3, CDS2_L_START, "888.8", align="center")
-        _put_blk(grid, 3, CDS2_R_START, "888.8", align="center")
+        _put_blk(grid, 3, CPDS_L_START, "888.8", align="center")
+        _put_blk(grid, 3, CPDS_R_START, "888.8", align="center")
 
-        put_text(grid, "OAT", 5, CDS2_L_START, size=SMALL)
-        put_text(grid, " 888 C", 5, CDS2_L_START + 3, size=LARGE)
+        put_text(grid, "OAT", 5, CPDS_L_START, size=SMALL)
+        put_text(grid, " 888 C", 5, CPDS_L_START + 3, size=LARGE)
 
-        _put_blk(grid, 7, CDS2_L_START, "LOW", align="left", colour="r")
-        _put_blk(grid, 7, CDS2_C_START, "LOW", align="center", colour="r")
-        _put_blk(grid, 7, CDS2_R_START, "LOW", align="right", colour="r")
+        _put_blk(grid, 7, CPDS_L_START, "LOW", align="left", colour="r")
+        _put_blk(grid, 7, CPDS_C_START, "LOW", align="center", colour="r")
+        _put_blk(grid, 7, CPDS_R_START, "LOW", align="right", colour="r")
 
-        _put_kg_value(8, CDS2_L_START, "888", "left", "r")
-        _put_kg_value(8, CDS2_C_START, "888", "center", "r")
-        _put_kg_value(8, CDS2_R_START, "888", "right", "r")
+        _put_kg_value(8, CPDS_L_START, "888", "left", "r")
+        _put_kg_value(8, CPDS_C_START, "888", "center", "r")
+        _put_kg_value(8, CPDS_R_START, "888", "right", "r")
 
-        _put_blk(grid, 11, CDS2_L_START, "Vne", align="center", size=SMALL)
-        _put_blk(grid, 11, CDS2_C_START, "888 88", align="center")
-        _put_blk(grid, 11, CDS2_R_START, "RAD ALT", align="left", size=SMALL)
+        _put_blk(grid, 11, CPDS_L_START, "Vne", align="center", size=SMALL)
+        _put_blk(grid, 11, CPDS_C_START, "888 88", align="center")
+        _put_blk(grid, 11, CPDS_R_START, "RAD ALT", align="left", size=SMALL)
 
-        #_put_blk(grid, 12, CDS2_L_START, "HOOK", align="left", size=SMALL)
-        _put_blk(grid, 12, CDS2_R_START, "CABLE", align="left", size=SMALL)
+        #_put_blk(grid, 12, CPDS_L_START, "HOOK", align="left", size=SMALL)
+        _put_blk(grid, 12, CPDS_R_START, "CABLE", align="left", size=SMALL)
 
         _put_blk_lc(grid, 12, "GROSS MASS", align="left", size=SMALL)
 
         _put_blk_lc(grid, 13, "HOOK LOAD", align="left", size=SMALL)
-        _put_blk(grid, 13, CDS2_R_START, "LENGHT", align="left", size=SMALL)
+        _put_blk(grid, 13, CPDS_R_START, "LENGHT", align="left", size=SMALL)
 
     return grid
 
 
-# ========================= CDS2 MSG abbreviations =========================
-CDS2_MSG_ABBR = {
+# ========================= CPDS MSG abbreviations =========================
+CPDS_MSG_ABBR = {
     "ENG FAIL":   "EG FL",
     "ENG OIL P":  "OIL P",
     "FADEC FAIL": "FA FL",
@@ -841,14 +841,14 @@ CDS2_MSG_ABBR = {
     "STARTER":    "STRT",
 }
 
-def cds2_pick_msg(pairs):
+def cpds_pick_msg(pairs):
     """
     pairs: list of (state, label) like left_pairs / right_pairs
     return: 5-char abbreviation of the highest priority active label (based on list order), or None
     """
     for state, label in pairs:
         if state == 1:
-            return CDS2_MSG_ABBR.get(label, None)
+            return CPDS_MSG_ABBR.get(label, None)
     return None
 
 def _get_cds1_pairs(vr: MobiFlightVariableRequests):
@@ -1080,15 +1080,15 @@ class Cds1DisplayThread:
 
             sleep(self.tick)
 
-class Cds2DisplayThread:
-    """Background renderer for the CDS2 (copilot) display."""
+class CpdsDisplayThread:
+    """Background renderer for the CPDS (copilot) display."""
     def __init__(self, vr: MobiFlightVariableRequests, mcdu_primary: McduSocket, mcdu_alt: McduSocket, tick: float = 0.1):
         self.vr = vr
         self.mcdu = mcdu_primary
         self.mcdu_alt = mcdu_alt
         self.tick = tick
         self._stop = threading.Event()
-        self._thread = threading.Thread(target=self._run, name="CDS2Thread", daemon=True)
+        self._thread = threading.Thread(target=self._run, name="CPDSThread", daemon=True)
 
     def start(self):
         self._send_initial()
@@ -1102,19 +1102,19 @@ class Cds2DisplayThread:
         return self.mcdu_alt if cds_swap == 1 else self.mcdu
 
     def _send_initial(self):
-        cds2_grid = empty_grid()
-        clear_area_with_spaces(cds2_grid, 0, CDU_ROWS-1)
-        #put_text_center(cds2_grid, "CDS2", 6, colour="k", size=LARGE)
+        cpds_grid = empty_grid()
+        clear_area_with_spaces(cpds_grid, 0, CDU_ROWS-1)
+        #put_text_center(cpds_grid, "CPDS", 6, colour="k", size=LARGE)
         cds_swap = get_state(self.vr.get("(L:cds_Swap)"))  # Swap CDS display between captain/copilot MCDUs
-        self._select_mcdu(cds_swap).send_grid(cds2_grid)
+        self._select_mcdu(cds_swap).send_grid(cpds_grid)
 
     def _run(self):
         while not self._stop.is_set():
             try:
                 avionics_on  = get_state(self.vr.get("(A:CIRCUIT GENERAL PANEL ON,Bool)"))
-                cds2_breaker = get_state(self.vr.get("(L:brkCDS2)"))
+                cpds_breaker = get_state(self.vr.get("(L:brkCDS2)"))
                 knob_cds     = get_state(self.vr.get("(L:knobCdsMode)"))  # Range: 0-5
-                cds2_scroll  = get_state(self.vr.get("(L:cdsDisplayScroll)"))  # Range: 0-5
+                cpds_scroll  = get_state(self.vr.get("(L:cdsDisplayScroll)"))  # Range: 0-5
                 volt_amp     = get_state(self.vr.get("(L:voltampScroll)")) # 0 - 2
                 rad_alt_scrl = get_state(self.vr.get("(L:cdsVneRadAltScroll)"))  # toggle RAD ALT vs VNE/KT display
                 cds_test     = get_state(self.vr.get("(L:switchCDStest)"))
@@ -1124,22 +1124,22 @@ class Cds2DisplayThread:
                 # The LVAR defaults to "0" if not used, keeping CDS1 on Captain and CD2 on Copilot MCDU's
 
                 left_pairs, right_pairs = _get_cds1_pairs(self.vr)
-                msg1 = cds2_pick_msg(left_pairs)
-                msg2 = cds2_pick_msg(right_pairs)
+                msg1 = cpds_pick_msg(left_pairs)
+                msg2 = cpds_pick_msg(right_pairs)
 
-                cds2_grid = empty_grid()
+                cpds_grid = empty_grid()
                 if avionics_on == 0:
-                    clear_area_with_spaces(cds2_grid, 0, CDU_ROWS-1)
-                elif cds2_breaker == 1:
-                    cds2_grid = build_cds2_grid(self.vr, knob_cds, cds2_scroll, volt_amp, rad_alt_scrl, cds_test, msg1, msg2)
+                    clear_area_with_spaces(cpds_grid, 0, CDU_ROWS-1)
+                elif cpds_breaker == 1:
+                    cpds_grid = build_cpds_grid(self.vr, knob_cds, cpds_scroll, volt_amp, rad_alt_scrl, cds_test, msg1, msg2)
                 else:
-                    clear_area_with_spaces(cds2_grid, 0, CDU_ROWS-1)
-                    #put_text_center(cds2_grid, "CDS2 OFF", 6, colour="k", size=LARGE)
+                    clear_area_with_spaces(cpds_grid, 0, CDU_ROWS-1)
+                    #put_text_center(cpds_grid, "CPDS OFF", 6, colour="k", size=LARGE)
 
-                self._select_mcdu(cds_swap).send_grid(cds2_grid)
+                self._select_mcdu(cds_swap).send_grid(cpds_grid)
 
             except Exception as e:
-                logging.exception("CDS2 loop error: %s", e)
+                logging.exception("CPDS loop error: %s", e)
 
             sleep(self.tick)
 
@@ -1159,9 +1159,9 @@ if __name__ == "__main__":
     mcdu_copi = McduSocket(COPI_MCDU_URL)
 
     cds1_display = Cds1DisplayThread(vr, mcdu_capt, mcdu_copi)
-    cds2_display = Cds2DisplayThread(vr, mcdu_copi, mcdu_capt)
+    cpds_display = CpdsDisplayThread(vr, mcdu_copi, mcdu_capt)
     cds1_display.start()
-    cds2_display.start()
+    cpds_display.start()
 
     try:
         while True:
@@ -1170,6 +1170,6 @@ if __name__ == "__main__":
         pass
     finally:
         cds1_display.stop()
-        cds2_display.stop()
+        cpds_display.stop()
         mcdu_capt.close()
         mcdu_copi.close()
