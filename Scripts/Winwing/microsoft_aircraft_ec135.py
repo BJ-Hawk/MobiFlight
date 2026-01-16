@@ -434,6 +434,8 @@ class McduSocket:
                     while not self._stop.is_set():
                         # Wait for next payload; we coalesce to "latest only"
                         payload = await self._queue.get()
+                        if payload is None:
+                            break
 
                         # Drain any newer payloads (keep only the latest)
                         try:
@@ -472,8 +474,9 @@ class McduSocket:
         # Optional explicit shutdown if you ever want it
         self._stop.set()
         try:
-            if self._loop:
-                self._loop.call_soon_threadsafe(lambda: None)
+            if self._loop and self._queue:
+                # Unblock _queue.get() so the async loop can exit cleanly.
+                self._loop.call_soon_threadsafe(self._queue.put_nowait, None)
         except Exception:
             pass
 
