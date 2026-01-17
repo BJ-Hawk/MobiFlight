@@ -316,10 +316,13 @@ def get_state(v) -> int:
     This expects returns desired INT - not to be used for other numerical operations
 
     This function converts various LVAR input types (None, bool, int, float, or str)
-    into one of five three states:
+    into one of six discrete states:
         0 = OFF / inactive
         1 = ON / active
         2 = PAGE / extended state
+        3 = additional state (e.g. tertiary mode / higher-level active state)
+        4 = additional state (e.g. quaternary mode / higher-level active state)
+        5 = additional state (e.g. highest-level mode / special condition)
 
     Numeric values are interpreted using thresholds:
         < 0.5  -> 0
