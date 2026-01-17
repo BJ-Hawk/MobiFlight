@@ -275,6 +275,10 @@ def grid_to_payload(grid: List[List[Cell]]) -> str:
     """Serialize the grid into a WinWing websocket payload."""
     return json.dumps({"Target": "Display", "Data": list(chain(*grid))})
 
+def select_mcdu(mcdu_primary: "McduSocket", mcdu_alt: "McduSocket", cds_swap: int) -> "McduSocket":
+    """Pick the active MCDU based on the CDS swap LVAR value."""
+    return mcdu_alt if cds_swap == 1 else mcdu_primary
+
 # ========================= Rolling list layout =========================
 LEFT_COL_START  = 0
 RIGHT_COL_START = 13  # 12-char left block + 1 column gap
@@ -313,7 +317,7 @@ def draw_columns(grid: List[List[Cell]], left_labels: List[str], right_labels: L
 def get_state(v) -> int:
     """
     Normalize a raw LVAR value into a discrete display state.
-    This expects returns desired INT - not to be used for other numerical operations
+    This returns desired INT - not to be used for other numerical operations
 
     This function converts various LVAR input types (None, bool, int, float, or str)
     into one of six discrete states:
@@ -443,9 +447,16 @@ class McduSocket:
                         # Drain any newer payloads (keep only the latest)
                         try:
                             while True:
-                                payload = self._queue.get_nowait()
+                                next_payload = self._queue.get_nowait()
+                                if next_payload is None:
+                                    payload = None
+                                    break
+                                payload = next_payload
                         except asyncio.QueueEmpty:
                             pass
+
+                        if payload is None:
+                            break
 
                         # Send
                         await ws.send(payload)
@@ -482,6 +493,8 @@ class McduSocket:
                 self._loop.call_soon_threadsafe(self._queue.put_nowait, None)
         except Exception:
             pass
+            # Best-effort shutdown: log at debug level but do not raise during close().
+            logging.debug("MCDU close encountered error during shutdown: %s", e)
 
 # ========================= CPDS (COPILOT) RENDERER =========================
 def _safe_float(v, default: float = 0.0) -> float:
@@ -571,12 +584,24 @@ def build_cpds_grid(
     msg1=None,
     msg2=None
 ) -> List[List[Cell]]:
-    """
-    Build CPDS screen for COPILOT MCDU.
-
-    IMPORTANT:
-    - Does NOT call get_state()
-    - Consumes helper ints passed in from the while-loop HELPERS section
+    """ 
+    This function is intentionally side‑effect free: it only formats the current
+    CPDS state into a character grid. It does **not** perform any simulator or
+    device I/O and therefore does **not** call ``get_state()`` itself.
+    The caller is responsible for:
+    - Reading the current CPDS‑related states (typically via ``get_state()`` in
+      the main while‑loop "HELPERS" section).
+    - Passing the resulting raw integer values into this function:
+      * ``knob_cds``: current CPDS / CDS knob position selector.
+      * ``cpds_scroll``: vertical scroll index for the CPDS page.
+      * ``volt_amp``: selector for voltage/ampere display mode.
+      * ``rad_alt_scrl``: scroll/selector value for radar‑altimeter related
+        information.
+      * ``cds_test``: flag or mode indicating that the CDS/CPDS test function
+        is active.
+    By keeping all calls to ``get_state()`` in the outer loop and passing the
+    values in as arguments, we avoid redundant SimConnect/MobiFlight lookups
+    inside this formatting routine and make it easier to test in isolation.
     """
 
     grid = empty_grid()
@@ -586,11 +611,7 @@ def build_cpds_grid(
     for r in (2, 4, 6, 10):
         _cpds_separator(grid, r)
 
-    # Static fuel labels (rows 8/9)
-    #_put_blk(grid, 8, CPDS_L_START, " KG", align="left")
-    #_put_blk(grid, 8, CPDS_C_START, " KG", align="center")
-    #_put_blk(grid, 8, CPDS_R_START, "KG", align="center")
-
+    # Fuel static labels (row 9)
     _put_blk(grid, 9, CPDS_L_START, "SPLY 1", align="left", size=SMALL)
     _put_blk(grid, 9, CPDS_C_START, "MAIN", align="center", size=SMALL)
     _put_blk(grid, 9, CPDS_R_START, "SPLY 2", align="right", size=SMALL)
@@ -603,7 +624,7 @@ def build_cpds_grid(
     elif knob_cds == 5:
         _put_blk_lc(grid, 13, "HOOK LOAD", align="left", size=SMALL)
         _put_blk(grid, 12, CPDS_R_START, "CABLE", align="left", size=SMALL)
-        _put_blk(grid, 13, CPDS_R_START, "LENGHT", align="left", size=SMALL)  # keep spelling
+        _put_blk(grid, 13, CPDS_R_START, "LENGHT", align="left", size=SMALL)  # intentional typo matches in-game display
 
     # ---------------- AVAR reads (only what we need) ----------------
     eng1_oth = _safe_float(vr.get("(A:GENERAL ENG ELAPSED TIME:1,number)"))  # engine 1 operating time (seconds)
@@ -776,8 +797,9 @@ def build_cpds_grid(
     # ---------------- Row 11 center value (RAD ALT / KT / ----) ----------------
     if knob_cds < 5:
         if rad_alt_scrl == 0:
-            ft = int(round((rad_alt_raw - 1.5) * 3.28084))
-            rad_alt_mkr = _safe_float(vr.get("(L:radioHeightMkr,feet)")) * 10
+            ft = int(round((rad_alt_raw - 1.5) * 3.28084))  
+                # Subtract 1.5 m to account for the radio altimeter sensor offset (approx. antenna height / calibration)
+            rad_alt_mkr = _safe_float(vr.get("(L:radioHeightMkr)")) * 10
             rad_alt_col = "a" if rad_alt_raw <= rad_alt_mkr else "w"
             _put_blk(grid, 11, CPDS_C_START, f" {ft} FT  ", align="right", colour=rad_alt_col)
         else:
@@ -812,7 +834,6 @@ def build_cpds_grid(
         _put_blk(grid, 11, CPDS_C_START, "888 88", align="center")
         _put_blk(grid, 11, CPDS_R_START, "RAD ALT", align="left", size=SMALL)
 
-        #_put_blk(grid, 12, CPDS_L_START, "HOOK", align="left", size=SMALL)
         _put_blk(grid, 12, CPDS_R_START, "CABLE", align="left", size=SMALL)
 
         _put_blk_lc(grid, 12, "GROSS MASS", align="left", size=SMALL)
@@ -1002,15 +1023,12 @@ class Cds1DisplayThread:
         self._stop.set()
         self._thread.join(timeout=1.0)
 
-    def _select_mcdu(self, cds_swap: int) -> McduSocket:
-        return self.mcdu_alt if cds_swap == 1 else self.mcdu
-
     def _send_initial(self):
         cds1_grid = empty_grid()
         clear_area_with_spaces(cds1_grid, 0, CDU_ROWS-1)  # full screen spaces
         put_text_center(cds1_grid, "MISC", 6, colour="k", size=LARGE)
         cds_swap = get_state(self.vr.get("(L:cds_Swap)"))  # Swap CDS display between captain/copilot MCDUs
-        self._select_mcdu(cds_swap).send_grid(cds1_grid)
+        select_mcdu(self.mcdu, self.mcdu_alt, cds_swap).send_grid(cds1_grid)
 
     def _run(self):
         row_11 = row_12 = row_13 = None  # pylint: disable=invalid-name
@@ -1078,8 +1096,10 @@ class Cds1DisplayThread:
                     for r, txt in ((11, row_11), (12, row_12), (13, row_13)):
                         if txt:
                             put_text_center(cds1_grid, txt, r, colour="g", size=LARGE)
-
-                self._select_mcdu(cds_swap).send_grid(cds1_grid)
+                else:
+                    clear_area_with_spaces(cds1_grid, 0, CDU_ROWS-1)
+                    put_text_center(cds1_grid, "MISC", 6, colour="k", size=LARGE)
+                select_mcdu(self.mcdu, self.mcdu_alt, cds_swap).send_grid(cds1_grid)
 
             except Exception as e:
                 logging.exception("CDS1 loop error: %s", e)
@@ -1104,15 +1124,12 @@ class CpdsDisplayThread:
         self._stop.set()
         self._thread.join(timeout=1.0)
 
-    def _select_mcdu(self, cds_swap: int) -> McduSocket:
-        return self.mcdu_alt if cds_swap == 1 else self.mcdu
-
     def _send_initial(self):
         cpds_grid = empty_grid()
         clear_area_with_spaces(cpds_grid, 0, CDU_ROWS-1)
-        #put_text_center(cpds_grid, "CPDS", 6, colour="k", size=LARGE)
+        put_text_center(cpds_grid, "CPDS", 6, colour="k", size=LARGE)
         cds_swap = get_state(self.vr.get("(L:cds_Swap)"))  # Swap CDS display between captain/copilot MCDUs
-        self._select_mcdu(cds_swap).send_grid(cpds_grid)
+        select_mcdu(self.mcdu, self.mcdu_alt, cds_swap).send_grid(cpds_grid)
 
     def _run(self):
         while not self._stop.is_set():
@@ -1145,9 +1162,11 @@ class CpdsDisplayThread:
                     cpds_grid = build_cpds_grid(self.vr, knob_cds, cpds_scroll, volt_amp, rad_alt_scrl, cds_test, msg1, msg2)
                 else:
                     clear_area_with_spaces(cpds_grid, 0, CDU_ROWS-1)
-                    #put_text_center(cpds_grid, "CPDS OFF", 6, colour="k", size=LARGE)
+                    # Intentionally disabled: older behavior showed an explicit "CPDS OFF" label when the CPDS breaker was out.
+                    # Keep this call commented so users can re-enable the overlay for debugging or custom setups without changing defaults.
+                    # put_text_center(cpds_grid, "CPDS OFF", 6, colour="k", size=LARGE)
 
-                self._select_mcdu(cds_swap).send_grid(cpds_grid)
+                select_mcdu(self.mcdu, self.mcdu_alt, cds_swap).send_grid(cpds_grid)
 
             except Exception as e:
                 logging.exception("CPDS loop error: %s", e)
@@ -1165,7 +1184,7 @@ if __name__ == "__main__":
     vr = MobiFlightVariableRequests(sm)
     vr.clear_sim_variables()
 
-    # MCDU socket (captain only)
+    # MCDU sockets (captain and copilot)
     mcdu_capt = McduSocket(CAPT_MCDU_URL)
     mcdu_copi = McduSocket(COPI_MCDU_URL)
 
