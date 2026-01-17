@@ -789,10 +789,10 @@ def build_cpds_grid(
     fuel_lvl_l_pct = _ceil_int(fuel_lvl_l * 100.0)
     fuel_lvl_c_pct = _ceil_int(fuel_lvl_c * 100.0)
     fuel_lvl_r_pct = _ceil_int(fuel_lvl_r * 100.0)
-    fuel_lvl_l_col = "r" if fuel_lvl_l_pct <= 5 else ("a" if fuel_lvl_l_pct <= 10 else "w")
-    fuel_lvl_c_col = "r" if fuel_lvl_c_pct <= 5 else ("a" if fuel_lvl_c_pct <= 10 else "w")
-    fuel_lvl_r_col = "r" if fuel_lvl_r_pct <= 5 else ("a" if fuel_lvl_r_pct <= 10 else "w")
-    low_fuel_kg = 13.5
+    fuel_lvl_l_colour = "r" if fuel_lvl_l_pct <= 5 else ("a" if fuel_lvl_l_pct <= 10 else "w")
+    fuel_lvl_c_colour = "r" if fuel_lvl_c_pct <= 5 else ("a" if fuel_lvl_c_pct <= 10 else "w")
+    fuel_lvl_r_colour = "r" if fuel_lvl_r_pct <= 5 else ("a" if fuel_lvl_r_pct <= 10 else "w")
+    low_fuel_kg = 13.5 # 5.0Gal as per in game display
     low_l = fuel_sply1 <= low_fuel_kg
     low_c = fuel_main <= low_fuel_kg
     low_r = fuel_sply2 <= low_fuel_kg
@@ -815,9 +815,9 @@ def build_cpds_grid(
         put_text(grid, "KG", row, col + len(value_text), colour=colour, size=SMALL)
 
     # ---------------- Row 8 "NNNKG" ----------------
-    _put_kg_value(8, CPDS_L_START, f"{int(round(fuel_sply1)):>3}", "left", fuel_lvl_l_col)
-    _put_kg_value(8, CPDS_C_START, f"{int(round(fuel_main )):>3}", "center", fuel_lvl_c_col)
-    _put_kg_value(8, CPDS_R_START, f"{int(round(fuel_sply2)):>3}", "right", fuel_lvl_r_col)
+    _put_kg_value(8, CPDS_L_START, f"{int(round(fuel_sply1)):>3}", "left", fuel_lvl_l_colour)
+    _put_kg_value(8, CPDS_C_START, f"{int(round(fuel_main )):>3}", "center", fuel_lvl_c_colour)
+    _put_kg_value(8, CPDS_R_START, f"{int(round(fuel_sply2)):>3}", "right", fuel_lvl_r_colour)
 
     # ---------------- Row 11 center value (RAD ALT / KT / ----) ----------------
     if knob_cds < 5:
