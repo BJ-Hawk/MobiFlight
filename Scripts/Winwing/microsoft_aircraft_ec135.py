@@ -717,20 +717,20 @@ def build_cpds_grid(
         elif cpds_scroll == 1:
             eng1_n2_pct = eng1_n2 * 100.0
             eng2_n2_pct = eng2_n2 * 100.0
-            eng1_n2_col = "r" if eng1_n2_pct <= 80.0 or eng1_n2_pct >= 106.0 else "w"
-            eng2_n2_col = "r" if eng2_n2_pct <= 80.0 or eng2_n2_pct >= 106.0 else "w"
-            _put_blk(grid, 0, CPDS_L_START, _fmt_num(eng1_n2_pct, 1), align="center", colour=eng1_n2_col)
+            eng1_n2_colour = "r" if eng1_n2_pct <= 80.0 or eng1_n2_pct >= 106.0 else "w"
+            eng2_n2_colour = "r" if eng2_n2_pct <= 80.0 or eng2_n2_pct >= 106.0 else "w"
+            _put_blk(grid, 0, CPDS_L_START, _fmt_num(eng1_n2_pct, 1), align="center", colour=eng1_n2_colour)
             _put_blk(grid, 0, CPDS_C_START, "N2 %", align="center", size=SMALL)
-            _put_blk(grid, 0, CPDS_R_START, _fmt_num(eng2_n2_pct, 1), align="center", colour=eng2_n2_col)
+            _put_blk(grid, 0, CPDS_R_START, _fmt_num(eng2_n2_pct, 1), align="center", colour=eng2_n2_colour)
 
         elif cpds_scroll == 2:
             eng1_egt_c = eng1_egt - 273.15
             eng2_egt_c = eng2_egt - 273.15
-            eng1_egt_col = "r" if eng1_egt_c >= 895 else ("a" if eng1_egt_c >= 855 else "w")
-            eng2_egt_col = "r" if eng2_egt_c >= 895 else ("a" if eng2_egt_c >= 855 else "w")
-            _put_blk(grid, 0, CPDS_L_START, _fmt_num(eng1_egt_c, 0), align="center", colour=eng1_egt_col)
+            eng1_egt_colour = "r" if eng1_egt_c >= 895 else ("a" if eng1_egt_c >= 855 else "w")
+            eng2_egt_colour = "r" if eng2_egt_c >= 895 else ("a" if eng2_egt_c >= 855 else "w")
+            _put_blk(grid, 0, CPDS_L_START, _fmt_num(eng1_egt_c, 0), align="center", colour=eng1_egt_colour)
             _put_blk(grid, 0, CPDS_C_START, "EGT C", align="center", size=SMALL)
-            _put_blk(grid, 0, CPDS_R_START, _fmt_num(eng2_egt_c, 0), align="center", colour=eng2_egt_col)
+            _put_blk(grid, 0, CPDS_R_START, _fmt_num(eng2_egt_c, 0), align="center", colour=eng2_egt_colour)
 
         elif cpds_scroll == 3:
             _put_blk(grid, 0, CPDS_L_START, _fmt_num(eng1_t1 - 273.15, 0), align="center")
@@ -750,11 +750,11 @@ def build_cpds_grid(
     # ---------------- Row 1 (TQ%) ----------------
     eng1_tq_pct = eng1_tq * 100.0
     eng2_tq_pct = eng2_tq * 100.0
-    eng1_tq_col = "r" if eng1_tq_pct >= 75.0 else ("a" if eng1_tq_pct >= 70.0 else "w")
-    eng2_tq_col = "r" if eng2_tq_pct >= 75.0 else ("a" if eng2_tq_pct >= 70.0 else "w")
-    _put_blk(grid, 1, CPDS_L_START, _fmt_num(eng1_tq_pct, 1), align="center", colour=eng1_tq_col)
+    eng1_tq_colour = "r" if eng1_tq_pct >= 75.0 else ("a" if eng1_tq_pct >= 70.0 else "w")
+    eng2_tq_colour = "r" if eng2_tq_pct >= 75.0 else ("a" if eng2_tq_pct >= 70.0 else "w")
+    _put_blk(grid, 1, CPDS_L_START, _fmt_num(eng1_tq_pct, 1), align="center", colour=eng1_tq_colour)
     _put_blk(grid, 1, CPDS_C_START, "TQ%", align="center")
-    _put_blk(grid, 1, CPDS_R_START, _fmt_num(eng2_tq_pct, 1), align="center", colour=eng2_tq_col)
+    _put_blk(grid, 1, CPDS_R_START, _fmt_num(eng2_tq_pct, 1), align="center", colour=eng2_tq_colour)
 
     # ---------------- Row 3 (DC/GEN/BAT) ----------------
     if volt_amp == 0:
@@ -825,8 +825,8 @@ def build_cpds_grid(
             ft = int(round((rad_alt_raw - 1.5) * 3.28084))  
                 # Subtract 1.5 m to account for the radio altimeter sensor offset (approx. antenna height / calibration)
             rad_alt_mkr = _safe_float(vr.get("(L:radioHeightMkr)")) * 10
-            rad_alt_col = "a" if rad_alt_raw <= rad_alt_mkr else "w"
-            _put_blk(grid, 11, CPDS_C_START, f" {ft} FT  ", align="right", colour=rad_alt_col)
+            rad_alt_colour = "a" if rad_alt_raw <= rad_alt_mkr else "w"
+            _put_blk(grid, 11, CPDS_C_START, f" {ft} FT  ", align="right", colour=rad_alt_colour)
         else:
             _put_blk(grid, 11, CPDS_C_START, "--- KT  ", align="right")
     elif knob_cds == 5:
