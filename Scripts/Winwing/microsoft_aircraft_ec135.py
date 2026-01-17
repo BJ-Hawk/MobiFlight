@@ -516,7 +516,7 @@ class McduSocket:
             if self._loop and self._queue:
                 # Unblock _queue.get() so the async loop can exit cleanly.
                 self._loop.call_soon_threadsafe(self._queue.put_nowait, None)
-        except Exception:
+        except Exception as e:
             pass
             # Best-effort shutdown: log at debug level but do not raise during close().
             logging.debug("MCDU close encountered error during shutdown: %s", e)
@@ -1060,10 +1060,18 @@ class Cds1DisplayThread:
 
         while not self._stop.is_set():
             try:
+                # NOTE: "CIRCUIT GENERAL PANEL ON" is a general panel power circuit SimVar.
+                # In MSFS it indicates whether the main/panel bus is supplying power to the
+                # cockpit panels, not a dedicated "avionics master" line. For the EC135
+                # profile we treat this as "display power available" for the CPDS and
+                # blank the display whenever this SimVar is 0.
                 avionics_on  = get_state(self.vr.get("(A:CIRCUIT GENERAL PANEL ON,Bool)"))
                 cds1_page    = get_state(self.vr.get("(L:cdsPage)")) # 0 - 2
                 cds1_breaker = get_state(self.vr.get("(L:brkCDS1)"))
                 cds_swap     = get_state(self.vr.get("(L:cds_Swap)"))  # Swap CDS display between captain/copilot MCDUs
+                # cds_Swap is a custom LVAR that needs to be explicitly set by User Custom code
+                # Recommended usage of MobiFlight Input Config with a Custom Preset Code "(L:cds_Swap) ! (>L:cds_Swap, Bool)"
+                # The LVAR defaults to "0" if not used, keeping CDS1 on Captain and CD2 on Copilot MCDU's
 
                 left_pairs, right_pairs = _get_cds1_pairs(self.vr)
                 misc_pairs = _get_cds1_misc_pairs(self.vr)
