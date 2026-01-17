@@ -1117,6 +1117,11 @@ class CpdsDisplayThread:
     def _run(self):
         while not self._stop.is_set():
             try:
+                # NOTE: "CIRCUIT GENERAL PANEL ON" is a general panel power circuit SimVar.
+                # In MSFS it indicates whether the main/panel bus is supplying power to the
+                # cockpit panels, not a dedicated "avionics master" line. For the EC135
+                # profile we treat this as "display power available" for the CPDS and
+                # blank the display whenever this SimVar is 0.
                 avionics_on  = get_state(self.vr.get("(A:CIRCUIT GENERAL PANEL ON,Bool)"))
                 cpds_breaker = get_state(self.vr.get("(L:brkCDS2)"))
                 knob_cds     = get_state(self.vr.get("(L:knobCdsMode)"))  # Range: 0-5
