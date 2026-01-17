@@ -4,6 +4,31 @@
 # CREDITS: Koseng on GitHub and his MSFSPythonSimConnectMobiFlightExtension (https://github.com/Koseng/MSFSPythonSimConnectMobiFlightExtension)
 # pylint: disable=redefined-outer-name,broad-exception-caught
 
+"""
+EC135 WinWing MCDU bridge for Microsoft Flight Simulator (MSFS).
+
+Purpose:
+    Provide a single-file integration that bridges MSFS SimConnect and MobiFlight
+    LVARs to WinWing MCDU websocket displays. This script targets the Microsoft
+    EC135 helicopter and renders cockpit pages on external MCDU hardware.
+
+Aircraft/Simulators:
+    - Microsoft EC135 (MSFS)
+    - Uses SimConnect and MobiFlight WASM LVAR access
+
+Architecture:
+    - SimConnectMobiFlight extends SimConnect to register client data handlers.
+    - MobiFlightVariableRequests manages LVAR subscriptions and value caching.
+    - McduSocket runs an asyncio websocket sender loop in a background thread.
+    - Two display threads render grids and send payloads to WinWing displays.
+
+Displays:
+    - CDS1 (captain side) and CPDS (copilot side) are rendered separately.
+    - Each display thread builds a grid and sends it at a fixed tick interval.
+    - The CDS swap LVAR (cds_Swap) can route CDS/CPDS output to the opposite
+      MCDU, allowing quick display handover between captain and copilot units.
+"""
+
 
 import json
 import logging
