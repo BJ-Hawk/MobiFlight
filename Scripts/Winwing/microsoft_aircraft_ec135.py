@@ -21,6 +21,10 @@ Architecture:
     - MobiFlightVariableRequests manages LVAR subscriptions and value caching.
     - McduSocket runs an asyncio websocket sender loop in a background thread.
     - Two display threads render grids and send payloads to WinWing displays.
+    - The cds_Swap LVAR can swap CDS/CPDS output between captain/copilot MCDUs.
+      cds_Swap is a custom LVAR that needs to be explicitly set by User Custom code
+      Recommended usage of MobiFlight Input Config with a Custom Preset Code "(L:cds_Swap) ! (>L:cds_Swap, Bool)"
+      The LVAR defaults to "0" if not used, keeping CDS1 on Captain and CD2 on Copilot MCDU's
 
 Displays:
     - CDS1 (captain side) and CPDS (copilot side) are rendered separately.
@@ -517,9 +521,9 @@ class McduSocket:
                 # Unblock _queue.get() so the async loop can exit cleanly.
                 self._loop.call_soon_threadsafe(self._queue.put_nowait, None)
         except Exception as e:
+            logging.debug("MCDU close encountered error during shutdown: %s", e)
             pass
             # Best-effort shutdown: log at debug level but do not raise during close().
-            logging.debug("MCDU close encountered error during shutdown: %s", e)
 
 # ========================= CPDS (COPILOT) RENDERER =========================
 def _safe_float(v, default: float = 0.0) -> float:
@@ -622,8 +626,7 @@ def build_cpds_grid(
       * ``volt_amp``: selector for voltage/ampere display mode.
       * ``rad_alt_scrl``: scroll/selector value for radar‑altimeter related
         information.
-      * ``cds_test``: flag or mode indicating that the CDS/CPDS test function
-        is active.
+      * ``cds_test``: LVAR indicating that the "CDS test" switch is switched.
     By keeping all calls to ``get_state()`` in the outer loop and passing the
     values in as arguments, we avoid redundant SimConnect/MobiFlight lookups
     inside this formatting routine and make it easier to test in isolation.
@@ -792,7 +795,7 @@ def build_cpds_grid(
     fuel_lvl_l_colour = "r" if fuel_lvl_l_pct <= 5 else ("a" if fuel_lvl_l_pct <= 10 else "w")
     fuel_lvl_c_colour = "r" if fuel_lvl_c_pct <= 5 else ("a" if fuel_lvl_c_pct <= 10 else "w")
     fuel_lvl_r_colour = "r" if fuel_lvl_r_pct <= 5 else ("a" if fuel_lvl_r_pct <= 10 else "w")
-    low_fuel_kg = 13.5 # 5.0Gal as per in game display
+    low_fuel_kg = 13.5 # = 5.0Gal simulator internal logic used for "LOW FUEL" warnings
     low_l = fuel_sply1 <= low_fuel_kg
     low_c = fuel_main <= low_fuel_kg
     low_r = fuel_sply2 <= low_fuel_kg
@@ -823,7 +826,7 @@ def build_cpds_grid(
     if knob_cds < 5:
         if rad_alt_scrl == 0:
             ft = int(round((rad_alt_raw - 1.5) * 3.28084))  
-                # Subtract 1.5 m to account for the radio altimeter sensor offset (approx. antenna height / calibration)
+                # Subtract 1.5 m from the LVAr in meters to account for the radio altimeter sensor offset (approx. antenna height / calibration)
             rad_alt_mkr = _safe_float(vr.get("(L:radioHeightMkr)")) * 10
             rad_alt_colour = "a" if rad_alt_raw <= rad_alt_mkr else "w"
             _put_blk(grid, 11, CPDS_C_START, f" {ft} FT  ", align="right", colour=rad_alt_colour)
@@ -864,7 +867,7 @@ def build_cpds_grid(
         _put_blk_lc(grid, 12, "GROSS MASS", align="left", size=SMALL)
 
         _put_blk_lc(grid, 13, "HOOK LOAD", align="left", size=SMALL)
-        _put_blk(grid, 13, CPDS_R_START, "LENGHT", align="left", size=SMALL)
+        _put_blk(grid, 13, CPDS_R_START, "LENGHT", align="left", size=SMALL) # intentional typo matches in-game display
 
     return grid
 
@@ -1068,10 +1071,7 @@ class Cds1DisplayThread:
                 avionics_on  = get_state(self.vr.get("(A:CIRCUIT GENERAL PANEL ON,Bool)"))
                 cds1_page    = get_state(self.vr.get("(L:cdsPage)")) # 0 - 2
                 cds1_breaker = get_state(self.vr.get("(L:brkCDS1)"))
-                cds_swap     = get_state(self.vr.get("(L:cds_Swap)"))  # Swap CDS display between captain/copilot MCDUs
-                # cds_Swap is a custom LVAR that needs to be explicitly set by User Custom code
-                # Recommended usage of MobiFlight Input Config with a Custom Preset Code "(L:cds_Swap) ! (>L:cds_Swap, Bool)"
-                # The LVAR defaults to "0" if not used, keeping CDS1 on Captain and CD2 on Copilot MCDU's
+                cds_swap     = get_state(self.vr.get("(L:cds_Swap)"))  # Swap CDS display between captain/copilot MCDUs                
 
                 left_pairs, right_pairs = _get_cds1_pairs(self.vr)
                 misc_pairs = _get_cds1_misc_pairs(self.vr)
@@ -1167,11 +1167,6 @@ class CpdsDisplayThread:
     def _run(self):
         while not self._stop.is_set():
             try:
-                # NOTE: "CIRCUIT GENERAL PANEL ON" is a general panel power circuit SimVar.
-                # In MSFS it indicates whether the main/panel bus is supplying power to the
-                # cockpit panels, not a dedicated "avionics master" line. For the EC135
-                # profile we treat this as "display power available" for the CPDS and
-                # blank the display whenever this SimVar is 0.
                 avionics_on  = get_state(self.vr.get("(A:CIRCUIT GENERAL PANEL ON,Bool)"))
                 cpds_breaker = get_state(self.vr.get("(L:brkCDS2)"))
                 knob_cds     = get_state(self.vr.get("(L:knobCdsMode)"))  # Range: 0-5
@@ -1180,9 +1175,6 @@ class CpdsDisplayThread:
                 rad_alt_scrl = get_state(self.vr.get("(L:cdsVneRadAltScroll)"))  # toggle RAD ALT vs VNE/KT display
                 cds_test     = get_state(self.vr.get("(L:switchCDStest)"))
                 cds_swap     = get_state(self.vr.get("(L:cds_Swap)"))  # Swap CDS display between captain/copilot MCDUs
-                # cds_Swap is a custom LVAR that needs to be explicitly set by User Custom code
-                # Recommended usage of MobiFlight Input Config with a Custom Preset Code "(L:cds_Swap) ! (>L:cds_Swap, Bool)"
-                # The LVAR defaults to "0" if not used, keeping CDS1 on Captain and CD2 on Copilot MCDU's
 
                 left_pairs, right_pairs = _get_cds1_pairs(self.vr)
                 msg1 = cpds_pick_msg(left_pairs)
