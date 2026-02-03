@@ -4,7 +4,8 @@
       "OpenMenu": "Abrir menú"
     },
     "Overlay": {
-      "OpeningWizard": "Abriendo diálogo..."
+      "OpeningWizard": "Abriendo diálogo...",
+      "SavingChanges": "Guardando proyecto..."
     },
     "HubHopUpdate": {
       "Error": "Actualización de HubHop falló. Por favor, inténtalo de nuevo más tarde.",
@@ -12,6 +13,10 @@
       "Title": "Actualización de HubHop disponible",
       "Description": "Tu base de datos de HubHop se descargó hace más de {{days}} días. ¿Te gustaría actualizarla ahora?",
       "Title.Downloading": "Descargando actualización de HubHop..."
+    },
+    "Error": {
+      "FallbackTitle": "Ooops... algo pasó que no debería haber pasado!",
+      "Unknown": "Ocurrió un error desconocido."
     }
   },
   "MainMenu": {
@@ -27,6 +32,9 @@
           "Out": "Ctrl+-"
         }
       }
+    },
+    "Extras": {
+      "ControllerBindings": "Vincular controladores"
     }
   },
   "Types": {
@@ -99,7 +107,7 @@
     },
     "BindingStatus": {
       "Match": "Controlador conectado",
-      "AutoBind": "Controlador vinculado automáticamente",
+      "AutoBind": "Controlador auto-vinculado",
       "Missing": "Controlador ausente",
       "RequiresManualBind": "Vinculación manual requerida"
     },
@@ -152,8 +160,7 @@
       },
       "Buttons": {
         "Create": "Crear proyecto",
-        "Update": "Actualizar proyecto",
-        "Cancel": "Cancelar"
+        "Update": "Actualizar proyecto"
       }
     },
     "UnsavedChanges": {
@@ -229,14 +236,16 @@
     "Status": {
       "Precondition": {
         "normal": "Normal",
-        "not satisfied": "La condición previa no se cumple."
+        "not satisfied": "La condición previa no se cumple.",
+        "Error": "Error al evaluar la condición previa. Consulte los registros para más detalles."
       },
       "Source": {
         "available": "La fuente está disponible.",
         "SIMCONNECT_NOT_AVAILABLE": "Esta configuración usa SimConnect, falta la conexión.",
         "FSUIPC_NOT_AVAILABLE": "Esta configuración usa FSUIPC, falta la conexión.",
         "XPLANE_NOT_AVAILABLE": "Esta configuración usa X-Plane, falta la conexión.",
-        "PROSIM_NOT_AVAILABLE": "Esta configuración usa ProSim, falta la conexión."
+        "PROSIM_NOT_AVAILABLE": "Esta configuración usa ProSim, falta la conexión.",
+        "ReadError": "Se produjo un error durante la lectura. Consulte los registros para más detalles."
       },
       "Modifier": {
         "Error": "Se aplica un modificador que tiene un error.",
@@ -295,6 +304,28 @@
       "shop": "Ofertas",
       "events": "Eventos",
       "community": "Comunidad"
+    }
+  },
+  "Dialog": {
+    "General": {
+      "Cancel": "Cancelar",
+      "Close": "Cerrar",
+      "SaveChanges": "Guardar cambios",
+      "ApplyChanges": "Aplicar cambios"
+    },
+    "ControllerBinding": {
+      "Title": "Vincular controladores",
+      "Description": "Vincula los controladores usados en este proyecto con los controladores físicos conectados a tu computadora.",
+      "Filter": {
+        "all": "Todos",
+        "manual": "manual",
+        "autobind": "auto-vinculado",
+        "missing": "ausente",
+        "match": "conectado"
+      },
+      "ControllersInProject": "{{count}} controladores usados en el proyecto",
+      "ConnectedControllers": "{{count}} controladores conectados a la PC",
+      "AllSet": "¡Todo listo! Tu proyecto está completamente configurado."
     }
   }
 }

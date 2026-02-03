@@ -4,7 +4,8 @@
       "OpenMenu": "Menü öffnen"
     },
     "Overlay": {
-      "OpeningWizard": "Öffne Wizard..."
+      "OpeningWizard": "Öffne Wizard...",
+      "SavingChanges": "Projekt wird gespeichert..."
     },
     "HubHopUpdate": {
       "Error": "HubHop update fehlgeschlagen. Bitte versuch es später nochmal.",
@@ -12,6 +13,10 @@
       "Title": "HubHop update verfügbar",
       "Description": "Deine HubHop-Datenbank ist älter als {{days}} Tage. Möchtest du sie jetzt aktualisieren?",
       "Title.Downloading": "HubHop update wird heruntergeladen..."
+    },
+    "Error": {
+      "FallbackTitle": "Ooops... irgendwas ist schief gelaufen!",
+      "Unknown": "Ein unbekannter Fehler ist aufgetreten."
     }
   },
   "MainMenu": {
@@ -27,6 +32,9 @@
           "Out": "Strg+-"
         }
       }
+    },
+    "Extras": {
+      "ControllerBindings": "Controller-Zuordnungen"
     }
   },
   "Types": {
@@ -35,7 +43,7 @@
     "Stepper": "Schrittmotor",
     "Servo": "Servo",
     "LcdDisplay": "LCD Display",
-    "ShiftRegister": "Ouptut Shift Register",
+    "ShiftRegister": "Output Shift Register",
     "CustomDevice": "Custom Device",
     "InputShiftRegister": "Input Shift Register",
     "Button": "Schalter",
@@ -152,8 +160,7 @@
       },
       "Buttons": {
         "Create": "Projekt erstellen",
-        "Update": "Projekt aktualisieren",
-        "Cancel": "Abbrechen"
+        "Update": "Projekt aktualisieren"
       }
     },
     "UnsavedChanges": {
@@ -229,14 +236,16 @@
     "Status": {
       "Precondition": {
         "normal": "Normal",
-        "not satisfied": "Vorbedingung nicht erfüllt."
+        "not satisfied": "Vorbedingung nicht erfüllt.",
+        "Error": "Fehler beim Auswerten der Vorbedingung. Weitere Details in den Logs."
       },
       "Source": {
         "available": "Quelle ist verfügbar.",
         "SIMCONNECT_NOT_AVAILABLE": "Diese Config verwendet SimConnect, Verbindung fehlt.",
         "FSUIPC_NOT_AVAILABLE": "Diese Config verwendet  FSUIPC, Verbindung fehlt.",
         "XPLANE_NOT_AVAILABLE": "Diese Config verwendet  X-Plane, Verbindung fehlt.",
-        "PROSIM_NOT_AVAILABLE": "Diese Config verwendet  ProSim, Verbindung fehlt."
+        "PROSIM_NOT_AVAILABLE": "Diese Config verwendet  ProSim, Verbindung fehlt.",
+        "ReadError": "Fehler beim Lesen aufgetreten. Weitere Details in den Logs."
       },
       "Modifier": {
         "Error": "Ein Modifikator verursacht einen Fehler.",
@@ -295,6 +304,28 @@
       "shop": "Angebote",
       "events": "Termine",
       "community": "Community"
+    }
+  },
+  "Dialog": {
+    "General": {
+      "Cancel": "Abbrechen",
+      "Close": "Schließen",
+      "SaveChanges": "Änderungen speichern",
+      "ApplyChanges": "Änderungen übernehmen"
+    },
+    "ControllerBinding": {
+      "Title": "Controller Zuordnungen",
+      "Description": "Ordne die in diesem Projekt verwendeten Controller den physisch an deinen Computer angeschlossenen Controllern zu.",
+      "Filter": {
+        "all": "Alle",
+        "manual": "Manuelle",
+        "autobind": "Automatisch",
+        "missing": "Fehlt",
+        "match": "Angeschlossen"
+      },
+      "ControllersInProject": "{{count}} Controller im Projekt verwendet",
+      "ConnectedControllers": "{{count}} Controller mit PC verbunden",
+      "AllSet": "Alles bereit! Dein Projekt ist vollständig konfiguriert."
     }
   }
 }

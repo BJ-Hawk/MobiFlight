@@ -269,6 +269,13 @@ namespace MobiFlight.UI
                 }
                 Process.Start(message.Url);
             });
+
+            MessageExchange.Instance.Subscribe<CommandControllerBindingsUpdate>((message) =>
+            {
+                ControllerBindingService.UpdateControllerBindings(execManager.Project, message.Bindings);
+                MessageExchange.Instance.Publish(execManager.Project);
+                ProjectOrConfigFileHasChanged();
+            });
         }
 
         private void OpenOutputConfigWizardForId(string guid)
@@ -631,7 +638,7 @@ namespace MobiFlight.UI
 
             if (execManager == null) return;
 
-            MessageExchange.Instance.Publish(new MobiFlight.BrowserMessages.Outgoing.BoardDefinitions() { Definitions = BoardDefinitions.Boards });
+            MessageExchange.Instance.Publish(new BrowserMessages.Outgoing.BoardDefinitions() { Definitions = BoardDefinitions.Boards });
             MessageExchange.Instance.Publish(new JoystickDefinitions() { Definitions = execManager.GetJoystickManager().Definitions });
             MessageExchange.Instance.Publish(new MidiControllerDefinitions() { Definitions = execManager.GetMidiBoardManager().Definitions.Values.ToList() });
         }
@@ -2254,12 +2261,22 @@ namespace MobiFlight.UI
             catch (Exception ex)
             {
                 MessageBox.Show($"Unable to save: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageExchange.Instance.Publish(new ProjectStatus()
+                {
+                    HasChanged = ProjectHasUnsavedChanges,
+                    SaveStatus = "error"
+                });
                 return;
             }
 
             MessageExchange.Instance.Publish(execManager.Project);
             _storeAsRecentFile(execManager.Project.FilePath);
             ResetProjectAndConfigChanges();
+            MessageExchange.Instance.Publish(new ProjectStatus()
+            {
+                HasChanged = ProjectHasUnsavedChanges,
+                SaveStatus = "success"
+            });
         }
 
         private void UpdateSimConnectStatusIcon()
@@ -2483,7 +2500,14 @@ namespace MobiFlight.UI
             if (DialogResult.OK == fd.ShowDialog())
             {
                 SaveConfig(fd.FileName);
+                return;
             }
+
+            MessageExchange.Instance.Publish(new ProjectStatus()
+            {
+                HasChanged = ProjectHasUnsavedChanges,
+                SaveStatus = "cancelled"
+            });
         } //saveToolStripMenuItem_Click()
 
         private void TaskBar_StartProjectExecution(object sender, EventArgs e)
